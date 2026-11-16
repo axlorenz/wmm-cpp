@@ -5,6 +5,7 @@
 #include <array>
 #include <cstdint>
 #include <cstddef>
+#include <filesystem>
 
 namespace wmm {
 
@@ -23,6 +24,10 @@ namespace wmm {
             static constexpr double mmodel_epoch {2025.0};
 
         public:
+
+        explicit WmmModel(const std::filesystem::path& coefficient_file);
+        static std::array<WmmCoefficients, mcoeff_count> loadCoefficients(const std::filesystem::path& coefficient_file);
+
     };
 
 }
