@@ -156,10 +156,14 @@ std::array<WmmCoefficients, WmmModel::mcoeff_count> WmmModel::loadCoefficients(c
 
     }   
 
+
     int n_int = parseCoefficient(n, 1, 12);
     std::uint8_t n_uint8t = static_cast<std::uint8_t>(n_int);
+    coefficients[0].mdegree = n_uint8t;
 
-    coefficients[0].mdegree = static_cast<std::uint8_t>(n_int);
+    int m_int = parseCoefficient(m, 0, n_int);
+    std::uint8_t m_uint8t = static_cast<std::uint8_t>(m_int);
+    coefficients[0].morder = m_uint8t;
 
 
 
