@@ -5,7 +5,10 @@ cmake_minimum_required(VERSION 3.20)
 project(wmm VERSION 0.1.0 LANGUAGES CXX)
 
 # 3. Add static library wmm
-add_library(wmm STATIC src/magnetic_field.cpp)
+add_library(wmm STATIC 
+    src/magnetic_field.cpp
+    src/wmm_model.cpp
+)
 
 # 4. Make target c++20
 target_compile_features(wmm PUBLIC cxx_std_20)
