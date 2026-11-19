@@ -11,13 +11,57 @@
 namespace wmm {
 
 
-WmmModel::WmmModel(const std::filesystem::path &coefficient_file) : mwmm_coeffs(loadCoefficients(coefficient_file))
-{
+namespace {
+
+    class ParseError : public std::runtime_error
+    {
+        public:
+        using std::runtime_error::runtime_error;
+    };
+
+    class RangeError : public std::runtime_error
+    {
+        public:
+        using std::runtime_error::runtime_error;
+    };
+
+    template<typename T>
+    T parseCoefficient(std::string_view text, T min, T max)
+    {
+        if (min > max)
+        {
+            throw std::invalid_argument("min must not exceed max");
+        }
+
+        T value{};
+
+        auto [ptr, ec] = std::from_chars(text.data(), text.data() + text.size(), value);
+
+        // check parse error
+        if(ec != std::errc() || ptr != (text.data() + text.size()))
+        {
+            throw ParseError(std::format("Invalid number format: '{}'", text)); 
+        }
+
+        if(!(min <= value && value <= max))
+        {
+            throw RangeError(std::format("Value {} out of range [{}, {}]", value, min, max)); 
+        }
+
+        return value;
+    }
 
 
 }
 
-bool WmmModel::str_matches_double(std::string_view sv, double expected)
+WmmModel::WmmModel(const std::filesystem::path &coefficient_file) : mwmm_coeffs(loadCoefficients(coefficient_file))
+{
+
+
+
+}
+
+bool WmmModel::str_matches_double(std::string_view sv, double expected) noexcept
 {
     double val {};
     auto [ptr, ec] = std::from_chars(sv.data(), sv.data() + sv.size(), val);
@@ -91,7 +135,39 @@ std::array<WmmCoefficients, WmmModel::mcoeff_count> WmmModel::loadCoefficients(c
 
     std::array<WmmCoefficients, mcoeff_count> coefficients{};
 
-    
+    if(!std::getline(input, line))
+    {
+        throw ParseError("Missing WMM coefficient record.");
+    }
+
+
+    std::istringstream iss{line};
+    std::string n, m, g, h, g_dot, h_dot, extra;
+
+
+    if (!(iss >> n >> m >> g >> h >> g_dot >> h_dot))
+    {
+        throw ParseError("Invalid coefficient record.");
+    }
+ 
+    if (iss >> extra)
+    {   
+        throw ParseError("Unexpected extra field in coefficient record.");
+
+    }   
+
+    int n_int = parseCoefficient(n, 1, 12);
+    std::uint8_t n_uint8t = static_cast<std::uint8_t>(n_int);
+
+    coefficients[0].mdegree = static_cast<std::uint8_t>(n_int);
+
+
+
+
+
+
+
+
 
     return {};
 }

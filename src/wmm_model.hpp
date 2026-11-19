@@ -13,7 +13,7 @@ namespace wmm {
     class WmmModel{
         private:
 
-            static bool str_matches_double(std::string_view sv, double expected);
+            static bool str_matches_double(std::string_view sv, double expected) noexcept;
 
             static constexpr std::uint8_t mmaxsh_deg {12};
             
