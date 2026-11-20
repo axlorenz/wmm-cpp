@@ -6,6 +6,7 @@
 #include <sstream>
 #include <format>
 #include <charconv>
+#include <limits>
 
 
 namespace wmm {
@@ -58,7 +59,6 @@ WmmModel::WmmModel(const std::filesystem::path &coefficient_file) : mwmm_coeffs(
 {
 
 
-
 }
 
 bool WmmModel::str_matches_double(std::string_view sv, double expected) noexcept
@@ -88,8 +88,6 @@ std::array<WmmCoefficients, WmmModel::mcoeff_count> WmmModel::loadCoefficients(c
     }
 
     std::istringstream header_stream{line};
-
-    // next step here use istringstream to parse header
 
     std::string header_fields [3] = {};
     std::size_t counter {0U};
@@ -122,7 +120,7 @@ std::array<WmmCoefficients, WmmModel::mcoeff_count> WmmModel::loadCoefficients(c
         );
     }
 
-    // 3. check mmodel_date, commented out, for now
+    // 3. check mmodel_date, commented out, for now, might be used later
     // if(header_fields[2] != mmodel_date)
     // {
     //     throw std::runtime_error(
@@ -130,50 +128,68 @@ std::array<WmmCoefficients, WmmModel::mcoeff_count> WmmModel::loadCoefficients(c
     //     );
     // }
 
-
-    // parse coefficients
-
     std::array<WmmCoefficients, mcoeff_count> coefficients{};
-
-    if(!std::getline(input, line))
-    {
-        throw ParseError("Missing WMM coefficient record.");
-    }
-
-
-    std::istringstream iss{line};
     std::string n, m, g, h, g_dot, h_dot, extra;
 
-
-    if (!(iss >> n >> m >> g >> h >> g_dot >> h_dot))
+    for (auto& coefficient : coefficients)
     {
-        throw ParseError("Invalid coefficient record.");
+        if (!std::getline(input, line))
+        {
+            throw ParseError("Missing WMM coefficient record.");
+        }
+
+        // Create istringstream
+        std::istringstream iss{line};
+
+        // Extract six tokens
+        if (!(iss >> n >> m >> g >> h >> g_dot >> h_dot))
+        {
+            throw ParseError("Invalid coefficient record.");
+        }
+    
+        if (iss >> extra)
+        {   
+            throw ParseError("Unexpected extra field in coefficient record.");
+
+        }   
+
+        // Parse and validate n and m
+        int n_parsed_int = parseCoefficient(n, 1, 12);
+        int m_parsed_int = parseCoefficient(m, 0, n_parsed_int);
+
+
+        // Parse and validate g, h, g_dot, h_dot
+        double g_parsed = parseCoefficient(g, std::numeric_limits<double>::lowest(), std::numeric_limits<double>::max());
+        double h_parsed = parseCoefficient(h, std::numeric_limits<double>::lowest(), std::numeric_limits<double>::max());
+        double g_dot_parsed = parseCoefficient(g_dot, std::numeric_limits<double>::lowest(), std::numeric_limits<double>::max());
+        double h_dot_parsed = parseCoefficient(h_dot, std::numeric_limits<double>::lowest(), std::numeric_limits<double>::max());
+
+        // Assign values to coefficient
+        coefficient.mdegree = static_cast<std::uint8_t>(n_parsed_int);
+        coefficient.morder = static_cast<std::uint8_t>(m_parsed_int);
+
+        coefficient.mg_nt = g_parsed;
+        coefficient.mh_nt = h_parsed;
+
+        coefficient.mg_dot_nt_y = g_dot_parsed;
+        coefficient.mh_dot_nt_y = h_dot_parsed;
+
     }
- 
-    if (iss >> extra)
-    {   
-        throw ParseError("Unexpected extra field in coefficient record.");
 
-    }   
+    //Validate next two termination lines contianing '999...9'
 
+    for(int i = 0; i < 2; i++)
+    {
+        if(!std::getline(input, line) ||
+            line.empty() ||
+            line.find_first_not_of('9') != std::string::npos
+        )
+        {
+            throw ParseError("Invalid WMM termination line.");
+        }
+    }
 
-    int n_int = parseCoefficient(n, 1, 12);
-    std::uint8_t n_uint8t = static_cast<std::uint8_t>(n_int);
-    coefficients[0].mdegree = n_uint8t;
-
-    int m_int = parseCoefficient(m, 0, n_int);
-    std::uint8_t m_uint8t = static_cast<std::uint8_t>(m_int);
-    coefficients[0].morder = m_uint8t;
-
-
-
-
-
-
-
-
-
-    return {};
+    return coefficients;
 }
 
 } // namespace wmm
