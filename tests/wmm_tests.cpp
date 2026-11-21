@@ -1,3 +1,4 @@
+#include "coordinate_transformations.hpp"
 #include "wmm_model.hpp"
 
 #include <cstdint>
