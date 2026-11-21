@@ -1,0 +1,22 @@
+{
+    "version": "2.0.0",
+    "tasks": [
+        {
+            "label": "Format C++ Project",
+            "type": "shell",
+            "command": "find src include -type f \\( -name '*.cpp' -o -name '*.hpp' \\) -exec clang-format -i {} +",
+            "windows": {
+                "command": "Get-ChildItem -Path src,include -Recurse -File -Include *.cpp,*.hpp | ForEach-Object { clang-format -i $_.FullName }",
+                "options": {
+                    "shell": {
+                        "executable": "powershell.exe"
+                    }
+                }
+            },
+            "options": {
+                "cwd": "${workspaceFolder}"
+            },
+            "problemMatcher": []
+        }
+    ]
+}
