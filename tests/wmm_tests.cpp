@@ -28,3 +28,36 @@ TEST(WmmModelTest, CoefficientsLoadedCorrectly)
     EXPECT_DOUBLE_EQ(coeffs.at(30).mg_dot_nt_y, 0.5);
     EXPECT_DOUBLE_EQ(coeffs.at(30).mh_dot_nt_y, -0.8);
 }
+
+TEST(CoordinateTransformationsTest, GeodeticToEcefAtEquator)
+{
+    const wmm::GeodeticCoordinates geodetic{0.0, 0.0, 0.0};
+
+    const auto ecef = wmm::geodeticToEcef(geodetic);
+
+    EXPECT_NEAR(ecef.X_m, 6378137.0, 1e-6);
+    EXPECT_NEAR(ecef.Y_m, 0.0, 1e-6);
+    EXPECT_NEAR(ecef.Z_m, 0.0, 1e-6);
+}
+
+TEST(CoordinateTransformationsTest, GeodeticToEcefAt45Degrees)
+{
+    const wmm::GeodeticCoordinates geodetic{45.0, 45.0, 0.0};
+
+    const auto ecef = wmm::geodeticToEcef(geodetic);
+
+    EXPECT_NEAR(ecef.X_m, 3194419.145, 1e-4);
+    EXPECT_NEAR(ecef.Y_m, 3194419.145, 1e-4);
+    EXPECT_NEAR(ecef.Z_m, 4487348.409, 1e-3);
+}
+
+TEST(CoordinateTransformationsTest, GeodeticToEcefAtNorthPole)
+{
+    const wmm::GeodeticCoordinates geodetic{90.0, 0.0, 0.0};
+
+    const auto ecef = wmm::geodeticToEcef(geodetic);
+
+    EXPECT_NEAR(ecef.X_m, 0.0, 1e-6);
+    EXPECT_NEAR(ecef.Y_m, 0.0, 1e-6);
+    EXPECT_NEAR(ecef.Z_m, 6356752.314245, 1e-6);
+}

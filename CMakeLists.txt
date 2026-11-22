@@ -8,6 +8,7 @@ project(wmm VERSION 0.1.0 LANGUAGES CXX)
 add_library(wmm STATIC 
     src/magnetic_field.cpp
     src/wmm_model.cpp
+    src/coordinate_transformations.cpp
 )
 
 # 4. Make target c++20
