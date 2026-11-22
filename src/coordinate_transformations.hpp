@@ -10,6 +10,11 @@ template <typename T> constexpr T square(T value)
     return value * value;
 }
 
+template <typename T> constexpr T cubed(T value)
+{
+    return value * value * value;
+}
+
 inline constexpr double deg_to_rad = std::numbers::pi_v<double> / 180.0;
 inline constexpr double rad_to_deg = 180.0 / std::numbers::pi_v<double>;
 
@@ -28,5 +33,6 @@ struct EcefCoordinates
 };
 
 [[nodiscard]] EcefCoordinates geodeticToEcef(const GeodeticCoordinates& geodetic);
+[[nodiscard]] GeodeticCoordinates ecefToGeodetic(const EcefCoordinates& ecef);
 
 } // namespace wmm
