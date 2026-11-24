@@ -4,19 +4,29 @@
 #include <cmath>
 #include <stdexcept>
 
+namespace
+{
+double compute_prime_vertical_radius(const double lat_rad)
+{
+
+    return wgs84::a_m / std::sqrt(1.0 - wgs84::e_squared * wmm::square(std::sin(lat_rad)));
+}
+} // namespace
+
 wmm::EcefCoordinates wmm::geodeticToEcef(const GeodeticCoordinates& geodetic)
 {
 
     const double lat_rad = geodetic.lat_deg * deg_to_rad;
     const double lon_rad = geodetic.lon_deg * deg_to_rad;
 
-    const double N = wgs84::a_m / std::sqrt(1 - wgs84::e_squared * square(std::sin(lat_rad)));
+    const double N_lat = compute_prime_vertical_radius(lat_rad);
 
-    const double x_m = (N + geodetic.height_ell_m) * std::cos(lat_rad) * std::cos(lon_rad);
+    const double x_m = (N_lat + geodetic.height_ell_m) * std::cos(lat_rad) * std::cos(lon_rad);
 
-    const double y_m = (N + geodetic.height_ell_m) * std::cos(lat_rad) * std::sin(lon_rad);
+    const double y_m = (N_lat + geodetic.height_ell_m) * std::cos(lat_rad) * std::sin(lon_rad);
 
-    const double z_m = ((N * (1.0 - wgs84::e_squared)) + geodetic.height_ell_m) * std::sin(lat_rad);
+    const double z_m =
+        ((N_lat * (1.0 - wgs84::e_squared)) + geodetic.height_ell_m) * std::sin(lat_rad);
 
     return EcefCoordinates{x_m, y_m, z_m};
 }
@@ -57,7 +67,7 @@ wmm::GeodeticCoordinates wmm::ecefToGeodetic(const EcefCoordinates& ecef)
 
     for (unsigned int i = 0; i < max_iterations; ++i)
     {
-        N_k = wgs84::a_m / (std::sqrt(1 - (wgs84::e_squared * square(std::sin(phi_k)))));
+        N_k = compute_prime_vertical_radius(phi_k);
         phi_kplus1 = std::atan2(ecef.Z_m + wgs84::e_squared * N_k * std::sin(phi_k), p_);
 
         if (std::abs(phi_kplus1 - phi_k) < epsilon_rad)
@@ -70,9 +80,26 @@ wmm::GeodeticCoordinates wmm::ecefToGeodetic(const EcefCoordinates& ecef)
 
     const double lat_deg = phi_kplus1 * rad_to_deg;
     const double lon_deg = std::atan2(ecef.Y_m, ecef.X_m) * rad_to_deg;
-    const double N_final =
-        wgs84::a_m / std::sqrt(1.0 - wgs84::e_squared * square(std::sin(phi_kplus1)));
+    const double N_final = compute_prime_vertical_radius(phi_kplus1);
     const double h_ell = p_ / std::cos(phi_kplus1) - N_final;
 
     return GeodeticCoordinates{lat_deg, lon_deg, h_ell};
+}
+
+wmm::SphericalCoordinates wmm::geodeticToSpherical(const GeodeticCoordinates& geodetic)
+{
+    const double lat_rad = geodetic.lat_deg * deg_to_rad;
+    const double lon_rad = geodetic.lon_deg * deg_to_rad;
+    const double height_ell_m = geodetic.height_ell_m;
+
+    const double N_lat = compute_prime_vertical_radius(lat_rad);
+
+    const double p_ = (N_lat + height_ell_m) * std::cos(lat_rad);
+
+    const double z_ = (N_lat * (1.0 - wgs84::e_squared) + height_ell_m) * std::sin(lat_rad);
+
+    const double radius_m = std::hypot(p_, z_);
+    const double colatitude_rad = std::atan2(p_, z_);
+
+    return SphericalCoordinates{radius_m, colatitude_rad, lon_rad};
 }

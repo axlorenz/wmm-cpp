@@ -32,7 +32,15 @@ struct EcefCoordinates
     double Z_m{};
 };
 
+struct SphericalCoordinates
+{
+    double radius_m;
+    double colatitude_rad;
+    double longitude_rad;
+};
+
 [[nodiscard]] EcefCoordinates geodeticToEcef(const GeodeticCoordinates& geodetic);
 [[nodiscard]] GeodeticCoordinates ecefToGeodetic(const EcefCoordinates& ecef);
+[[nodiscard]] SphericalCoordinates geodeticToSpherical(const GeodeticCoordinates& geodetic);
 
 } // namespace wmm
