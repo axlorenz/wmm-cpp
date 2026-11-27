@@ -9,6 +9,7 @@ add_library(wmm STATIC
     src/magnetic_field.cpp
     src/wmm_model.cpp
     src/coordinate_transformations.cpp
+    src/date_utils.cpp
 )
 
 # 4. Make target c++20
